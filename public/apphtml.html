@@ -1,0 +1,30 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Just messing around and stuff</title>
+</head>
+
+<body>
+  <script src="/node_modules/socket.io-client/dist/socket.io.js"></script>
+  <script>const socket = io();</script>
+  <script type = module src = '/client/app.js'></script>
+  <div><input type = "text" id = "username">Username</div>
+
+  <button id = 'subUsername'>Submit</button>
+
+  <div id = 'boardState'></div>
+  <h2>Pick a room:</h2>
+
+  <div id = 'roomState'></div>
+
+  <script src = '/public/rooms.js'></script>
+  <div>
+    <input type = "number" id = "room" name = "room" min = "1" max = "4" />
+      <lable for="room">Room #</lable>
+  </div>
+
+</body>
+</html>
