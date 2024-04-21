@@ -11,20 +11,23 @@
   <script src="/node_modules/socket.io-client/dist/socket.io.js"></script>
   <script>const socket = io();</script>
   <script type = module src = '/client/app.js'></script>
-  <div><input type = "text" id = "username">Username</div>
+
+  <label id="usernameLabel">Username<input type = "text" id = "username"></label>
 
   <button id = 'subUsername'>Submit</button>
 
-  <div id = 'boardState'></div>
-  <h2>Pick a room:</h2>
-
+  <h2 id = "pickRoomHeader">Pick a room:</h2>
   <div id = 'roomState'></div>
-
   <script src = '/public/rooms.js'></script>
-  <div>
+
+  <div id="roomSelector">
     <input type = "number" id = "room" name = "room" min = "1" max = "4" />
       <lable for="room">Room #</lable>
+      <button id = 'subRoom'>Submit</button>
+      <label id="roomFull"></label>
   </div>
+
+  <div id = 'boardState'></div>
 
 </body>
 </html>

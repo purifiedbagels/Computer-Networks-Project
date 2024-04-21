@@ -1,20 +1,32 @@
 let rooms = [
     {
         id: 1,
-        numUsers: 0 
+        numUsers: 0, 
+        board: [['x','o','o'],
+                ['x','o','o'],
+                ['x','x','o']]
     },
     {
         id: 2,
-        numUsers: 0 
+        numUsers: 0, 
+        board: [['x','o','o'],
+                ['x','o','o'],
+                ['x','x','o']] 
     },
     {
         id: 3,
-        numUsers: 0 
+        numUsers: 0, 
+        board: [['x','o','o'],
+                ['x','o','o'],
+                ['x','x','o']] 
     },
     {
         id: 4,
-        numUsers: 0 
-    },
+        numUsers: 0, 
+        board: [['x','o','o'],
+                ['x','o','o'],
+                ['x','x','o']] 
+    }
 ];
 
 let roomState = "";
@@ -22,11 +34,12 @@ let tempParse = "";
 
 for(let i = 0; i < 4; i++)
 {
-    tempParse = JSON.stringify(rooms[i])
-    tempParse = tempParse.replace(/"/g, "");
-    tempParse = tempParse.replace('{', "");
-    tempParse = tempParse.replace('}', "");
-    roomState = roomState + " | " + tempParse;
+    tempParse = "Room Number: ";
+    tempParse = tempParse + JSON.stringify(rooms[i].id);
+    tempParse = tempParse + "  ";
+    tempParse = tempParse + "Room Population: ";
+    tempParse = tempParse + JSON.stringify(rooms[i].numUsers);
+    roomState = roomState + ' | ' + tempParse;
 }
 document.getElementById('roomState').innerHTML = roomState;
 
