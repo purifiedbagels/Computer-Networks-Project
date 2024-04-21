@@ -12,6 +12,7 @@ const io = require("socket.io")(server, {
 
 
 let users = [];
+let rooms = [];
 
 
 //connection event 
@@ -25,7 +26,12 @@ io.on('connection', socket => {
         console.log(user);
         socket.broadcast.emit("new user", users);
     });
-    socket.on("join room", (roomName, cb) => {
+    socket.on("join room", (id, numUsers, board) => {
+        const room = {
+            id,
+            numUsers,
+            board,
+        };
         socket.join(roomName);
         socket.emit("joined", users.username);
     });
