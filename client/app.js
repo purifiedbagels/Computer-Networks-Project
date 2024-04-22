@@ -8,31 +8,59 @@ let playTurn = 1;
 let winBool = false;
 let tieBool = false;
 let socketRef = io.connect("/");
+let currentBoard = -1;
 
 
 document.getElementById("pickRoomHeader").style.display = "none";
 document.getElementById("roomState").style.display = "none";
 document.getElementById("roomSelector").style.display = "none";
+document.getElementById("playSquare").style.display = "none";
+document.getElementById("playerWon").style.display = "none";
 const subUsername = document.getElementById("subUsername");
 const subRoom = document.getElementById("subRoom");
+const subPlay = document.getElementById("subPlay");
 subUsername.addEventListener("click", getUsername);
 subRoom.addEventListener("click", roomSelect);
+subPlay.addEventListener("click", takeTurn);
 //document.getElementById('boardState').innerHTML = printboardState(boardState);
 
 //Display all users
 socketRef.on("new user", userList => {
-    user.push(userList);
-    console.log(user);
-    socket.emit("initial room update", rooms);
+    if(JSON.stringify(user) === JSON.stringify([]))
+    {
+        user.push(userList);
+        console.log(user);
+        socket.emit("initial room update", rooms);
+    }
+});
+socketRef.on("initial update rooms", roomList => {
+    rooms = [];
+    rooms.push(roomList);
+    console.log(rooms);
+    printRoomState();
 });
 socketRef.on("update rooms", roomList => {
     rooms = [];
     rooms.push(roomList);
     console.log(rooms);
     printRoomState();
+    document.getElementById('boardState').innerHTML = printboardState(rooms[0][currentBoard].board);
 });
 socketRef.on("room joined", (roomNum) =>{
     document.getElementById('boardState').innerHTML = printboardState(rooms[0][roomNum].board);
+    currentBoard = roomNum;
+});
+socketRef.on("player won", (playerWon) =>{
+    if(JSON.stringify(playerWon).includes(JSON.stringify(user)))
+    {
+        document.getElementById("playerWon").innerHTML = "You won!";
+
+    }
+    else
+    {
+        document.getElementById("playerWon").innerHTML = "You lose!";
+    }
+    document.getElementById("playerWon").style.display = "block";
 });
 
 function getUsername()
@@ -52,29 +80,26 @@ function getUsername()
 function roomSelect()
 {
     let roomNum = document.getElementById('room').value;
+    let user_exists = false;
     console.log("Room Selected: " + JSON.stringify(roomNum));
-    if(rooms[0][roomNum].numUsers == 2)
+    console.log("Static user is: " + JSON.stringify(user));
+    console.log("Value of rooms[0][roomNum].users: " + JSON.stringify(rooms[0][roomNum].users));
+    console.log("Value of JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)): " + JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)));
+    if(JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)))
+    {
+        user_exists = true;
+        rooms[0][roomNum].users.push(null);
+        console.log("This user is already in the room");
+    }
+    console.log("Output for saying room is full: " + rooms[0][roomNum].numUsers == 2 && user_exists == false)
+    if(rooms[0][roomNum].numUsers == 2 && user_exists == false)
     {
         document.getElementById('roomFull').innerHTML = "Room is full, select another";
         document.getElementById('roomFull').style.display = "block";
     }
-    else
+    else if(rooms[0][roomNum].numUsers != 2)
     {
         document.getElementById('roomFull').style.display = "none";
-        let user_exists = false;
-        for (let i = 0; i < rooms[0][roomNum].users.length; i++)
-        {
-            console.log("Static user is: " + JSON.stringify(user));
-            console.log("Value of rooms[0][roomNum].users: " + JSON.stringify(rooms[0][roomNum].users));
-            console.log("Value of JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)): " + JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)));
-            if(JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)))
-            {
-                user_exists = true;
-                rooms[0][roomNum].users.push(null);
-                console.log("This user is already in the room");
-                break;
-            }
-        }
         if(user_exists == false)
         {
             rooms[0][roomNum].numUsers = rooms[0][roomNum].numUsers + 1;
@@ -83,7 +108,15 @@ function roomSelect()
         }
         socket.emit("join room", rooms[0][roomNum]);
         rooms[0][roomNum].users.pop(null);
+        document.getElementById("playSquare").style.display = "block";
     }
+}
+
+function takeTurn()
+{
+    let selectedSquare = [parseInt(document.getElementById('playRow').value), parseInt(document.getElementById('playCol').value), currentBoard, user];
+    console.log("The user selected square: " + JSON.stringify(selectedSquare));
+    socket.emit("play square", selectedSquare);
 }
 
 function printboardState(a)
