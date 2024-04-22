@@ -12,7 +12,36 @@ const io = require("socket.io")(server, {
 
 
 let users = [];
-let rooms = [];
+let rooms = [
+    {
+        id: 0,
+        numUsers: 0, 
+        board: [['','',''],
+                ['','',''],
+                ['','','']] 
+    },
+    {
+        id: 1,
+        numUsers: 0, 
+        board: [['','',''],
+                ['','',''],
+                ['','','']] 
+    },
+    {
+        id: 2,
+        numUsers: 0, 
+        board: [['','',''],
+                ['','',''],
+                ['','','']] 
+    },
+    {
+        id: 3,
+        numUsers: 0, 
+        board: [['','',''],
+                ['','',''],
+                ['','','']] 
+    }
+];
 
 
 //connection event 
@@ -24,16 +53,17 @@ io.on('connection', socket => {
         };
         users.push(user);
         console.log(user);
-        socket.broadcast.emit("new user", users);
+        io.emit("new user", users);
     });
-    socket.on("join room", (id, numUsers, board) => {
-        const room = {
-            id,
-            numUsers,
-            board,
-        };
-        socket.join(roomName);
-        socket.emit("joined", users.username);
+    socket.on("initial room update", (room) => {
+        io.emit("update rooms", rooms);
+    });
+    socket.on("join room", (roomList) => {
+        //socket.join(roomList.id);
+        console.log(roomList.numUsers);
+        rooms[roomList.id].numUsers = roomList.numUsers;
+        rooms[roomList.id].board = roomList.board;
+        io.emit("room joined", roomList.id);
     });
 });
 
