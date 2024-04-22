@@ -17,6 +17,7 @@ let rooms = [
         id: 0,
         numUsers: 0,
         users: [],
+        won: false,
         board: [['','',''],
                 ['','',''],
                 ['','','']] 
@@ -24,7 +25,8 @@ let rooms = [
     {
         id: 1,
         numUsers: 0,
-        users: [], 
+        users: [],
+        won: false, 
         board: [['','',''],
                 ['','',''],
                 ['','','']] 
@@ -32,7 +34,8 @@ let rooms = [
     {
         id: 2,
         numUsers: 0,
-        users: [], 
+        users: [],
+        won: false, 
         board: [['','',''],
                 ['','',''],
                 ['','','']] 
@@ -40,12 +43,14 @@ let rooms = [
     {
         id: 3,
         numUsers: 0,
-        users: [], 
+        users: [],
+        won: false, 
         board: [['','',''],
                 ['','',''],
                 ['','','']] 
     }
 ];
+let lastPlayed = [[]];
 
 
 //connection event 
@@ -60,7 +65,7 @@ io.on('connection', socket => {
         io.emit("new user", user);
     });
     socket.on("initial room update", (room) => {
-        io.emit("update rooms", rooms);
+        io.emit("initial update rooms", rooms);
     });
     socket.on("join room", (roomList) => {
         //socket.join(roomList.id);
@@ -69,15 +74,87 @@ io.on('connection', socket => {
         rooms[roomList.id].board = roomList.board;
         console.log("Room users before updating: " + JSON.stringify(rooms[roomList.id].users));
         if(roomList.users.includes(null) == false)
-            rooms[roomList.id].users.push(roomList.users[0]);
+            rooms[roomList.id].users.push(roomList.users[roomList.users.length - 1]);
         console.log("Room users after updating: " + JSON.stringify(rooms[roomList.id].users));
         console.log("The users on the server side are: " + JSON.stringify(users));
-        io.emit("update rooms", rooms)
         io.emit("room joined", roomList.id);
+        io.emit("update rooms", rooms)
+    });
+    socket.on("play square", (square) => {
+        if(rooms[square[2]].won){}
+        else
+        {
+            if(JSON.stringify(lastPlayed).includes(JSON.stringify(square[3])) == false && rooms[square[2]].board[square[0]][square[1]] == '')
+            {
+                if(JSON.stringify(rooms[square[2]].users[0]) === JSON.stringify(square[3]))
+                {
+                    rooms[square[2]].board[square[0]][square[1]] = "x";
+                }
+                else
+                {
+                    rooms[square[2]].board[square[0]][square[1]] = "o";
+                }
+            lastPlayed = [square[3]];
+            io.emit("update rooms", rooms);
+            let win = checkWin(rooms[square[2]].board);
+            console.log("Win is: " + win);
+            if(win)
+            {
+                rooms[square[2]].won = true;
+                io.emit("player won", lastPlayed);
+            }
+            }
+        }
     });
 });
 
-
+function checkWin(board)
+{
+    let win = false;
+    for(let i = 0; i < board.length; i++)
+    {
+        //Check Horizontally
+        if(board[i][0] == '' || board[i][1] == '' || board[i][2] == '')
+        {
+            break;
+        }
+        if(board[i][0] == board[i][1] && board[i][0] == board[i][2])
+        {
+            win = true;
+        }
+    }
+    for(let i = 0; i < board.length; i++)
+    {
+        //Check Vertically
+        if(board[0][i] == '' || board[1][i] == '' || board[2][i] == '')
+        {
+            break;
+        }
+        if(board[0][i] == board[1][i] && board[0][i] == board[2][i])
+        {
+            win = true;
+        }
+    }
+    //Check diagonally
+    if(board[0][0] == board[1][1] && board[0][0] == board[2][2])
+    {
+        if(board[0][0] == '' || board[1][1] == '' || board[2][2] == ''){}
+        else
+        {
+            win = true;
+        }
+    }
+    if(board[0][2] == board[1][1] && board[0][2] == board[2][0])
+    {
+        if(board[0][2] == '' || board[1][1] == '' || board[2][0] == ''){}
+        else
+        {
+        win = true;
+        }
+    }
+    return win;
+    
+}
 
 //Middleware for serving static files. Points express server to the correct folder for pulling files
 app.use(express.static(path.join(__dirname)));
