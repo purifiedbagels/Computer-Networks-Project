@@ -1,12 +1,12 @@
+
 let boardState = [['','',''],
-                  ['','',''],
-                  ['','','']];
-let users = [];
+                ['','',''],
+                ['','','']];
+let user = [];
 let rooms = [];
 let playTurn = 1;
 let winBool = false;
 let tieBool = false;
-let printBoard = "";
 let socketRef = io.connect("/");
 
 
@@ -21,8 +21,8 @@ subRoom.addEventListener("click", roomSelect);
 
 //Display all users
 socketRef.on("new user", userList => {
-    users.push(userList);
-    console.log(users);
+    user.push(userList);
+    console.log(user);
     socket.emit("initial room update", rooms);
 });
 socketRef.on("update rooms", roomList => {
@@ -56,16 +56,39 @@ function roomSelect()
     if(rooms[0][roomNum].numUsers == 2)
     {
         document.getElementById('roomFull').innerHTML = "Room is full, select another";
+        document.getElementById('roomFull').style.display = "block";
     }
     else
     {
-        rooms[0][roomNum].numUsers = rooms[0][roomNum].numUsers + 1;
+        document.getElementById('roomFull').style.display = "none";
+        let user_exists = false;
+        for (let i = 0; i < rooms[0][roomNum].users.length; i++)
+        {
+            console.log("Static user is: " + JSON.stringify(user));
+            console.log("Value of rooms[0][roomNum].users: " + JSON.stringify(rooms[0][roomNum].users));
+            console.log("Value of JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)): " + JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)));
+            if(JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)))
+            {
+                user_exists = true;
+                rooms[0][roomNum].users.push(null);
+                console.log("This user is already in the room");
+                break;
+            }
+        }
+        if(user_exists == false)
+        {
+            rooms[0][roomNum].numUsers = rooms[0][roomNum].numUsers + 1;
+            rooms[0][roomNum].users.push(user);
+            console.log("users in client side room now is: " + JSON.stringify(rooms[0][roomNum].users));
+        }
         socket.emit("join room", rooms[0][roomNum]);
+        rooms[0][roomNum].users.pop(null);
     }
 }
 
 function printboardState(a)
 {
+    let printBoard = ""
     for(let i = 0; i < 3; i++)
     {
         for(let n = 0; n < 3; n++)
@@ -92,5 +115,3 @@ function printRoomState()
     }
 document.getElementById('roomState').innerHTML = roomState;
 }
-
-

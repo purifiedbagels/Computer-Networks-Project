@@ -15,28 +15,32 @@ let users = [];
 let rooms = [
     {
         id: 0,
-        numUsers: 0, 
+        numUsers: 0,
+        users: [],
         board: [['','',''],
                 ['','',''],
                 ['','','']] 
     },
     {
         id: 1,
-        numUsers: 0, 
+        numUsers: 0,
+        users: [], 
         board: [['','',''],
                 ['','',''],
                 ['','','']] 
     },
     {
         id: 2,
-        numUsers: 0, 
+        numUsers: 0,
+        users: [], 
         board: [['','',''],
                 ['','',''],
                 ['','','']] 
     },
     {
         id: 3,
-        numUsers: 0, 
+        numUsers: 0,
+        users: [], 
         board: [['','',''],
                 ['','',''],
                 ['','','']] 
@@ -53,7 +57,7 @@ io.on('connection', socket => {
         };
         users.push(user);
         console.log(user);
-        io.emit("new user", users);
+        io.emit("new user", user);
     });
     socket.on("initial room update", (room) => {
         io.emit("update rooms", rooms);
@@ -63,6 +67,12 @@ io.on('connection', socket => {
         console.log(roomList.numUsers);
         rooms[roomList.id].numUsers = roomList.numUsers;
         rooms[roomList.id].board = roomList.board;
+        console.log("Room users before updating: " + JSON.stringify(rooms[roomList.id].users));
+        if(roomList.users.includes(null) == false)
+            rooms[roomList.id].users.push(roomList.users[0]);
+        console.log("Room users after updating: " + JSON.stringify(rooms[roomList.id].users));
+        console.log("The users on the server side are: " + JSON.stringify(users));
+        io.emit("update rooms", rooms)
         io.emit("room joined", roomList.id);
     });
 });
@@ -83,4 +93,3 @@ app.get('/', async(req, res) => {
 server.listen(8080, () => {
     console.log("Server successfully running on part 8080");
 });
-
