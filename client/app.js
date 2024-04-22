@@ -1,11 +1,13 @@
-let boardState = [['x','o','o'],
-                  ['x','o','o'],
-                  ['x','x','o']];
+let boardState = [['','',''],
+                  ['','',''],
+                  ['','','']];
 let users = [];
+let rooms = [];
 let playTurn = 1;
 let winBool = false;
 let tieBool = false;
 let printBoard = "";
+let socketRef = io.connect("/");
 
 
 document.getElementById("pickRoomHeader").style.display = "none";
@@ -18,9 +20,19 @@ subRoom.addEventListener("click", roomSelect);
 //document.getElementById('boardState').innerHTML = printboardState(boardState);
 
 //Display all users
-socket.on("new user", userList => {
+socketRef.on("new user", userList => {
     users.push(userList);
     console.log(users);
+    socket.emit("initial room update", rooms);
+});
+socketRef.on("update rooms", roomList => {
+    rooms = [];
+    rooms.push(roomList);
+    console.log(rooms);
+    printRoomState();
+});
+socketRef.on("room joined", (roomNum) =>{
+    document.getElementById('boardState').innerHTML = printboardState(rooms[0][roomNum].board);
 });
 
 function getUsername()
@@ -41,15 +53,14 @@ function roomSelect()
 {
     let roomNum = document.getElementById('room').value;
     console.log("Room Selected: " + JSON.stringify(roomNum));
-    if(rooms[roomNum] == 2)
+    if(rooms[0][roomNum].numUsers == 2)
     {
         document.getElementById('roomFull').innerHTML = "Room is full, select another";
     }
     else
     {
-        rooms[roomNum].numUsers = rooms[roomNum].numUsers + 1;
-        socket.emit("join room", rooms[roomNum].id, rooms[roomNum].numUsers, rooms[roomNum].board);
-        document.getElementById('boardState').innerHTML = printboardState(rooms[roomNum].board);
+        rooms[0][roomNum].numUsers = rooms[0][roomNum].numUsers + 1;
+        socket.emit("join room", rooms[0][roomNum]);
     }
 }
 
@@ -66,6 +77,20 @@ function printboardState(a)
     return printBoard;
 }
 
-
+function printRoomState()
+{
+    let roomState = "";
+    let tempParse = "";
+    for(let i = 0; i < 4; i++)
+    {
+        tempParse = "Room Number: ";
+        tempParse = tempParse + rooms[0][i].id;
+        tempParse = tempParse + "  ";
+        tempParse = tempParse + "Room Population: ";
+        tempParse = tempParse + rooms[0][i].numUsers;
+        roomState = roomState + ' | ' + tempParse;
+    }
+document.getElementById('roomState').innerHTML = roomState;
+}
 
 
