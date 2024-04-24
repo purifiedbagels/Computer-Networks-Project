@@ -16,6 +16,7 @@ document.getElementById("roomState").style.display = "none";
 document.getElementById("roomSelector").style.display = "none";
 document.getElementById("playSquare").style.display = "none";
 document.getElementById("playerWon").style.display = "none";
+document.getElementById("boardState").style.display = "none";
 const subUsername = document.getElementById("subUsername");
 const subRoom = document.getElementById("subRoom");
 const subPlay = document.getElementById("subPlay");
@@ -48,6 +49,7 @@ socketRef.on("update rooms", roomList => {
 });
 socketRef.on("room joined", (roomNum) =>{
     document.getElementById('boardState').innerHTML = printboardState(rooms[0][roomNum].board);
+    document.getElementById("boardState").style.display = "block";
     currentBoard = roomNum;
 });
 socketRef.on("player won", (playerWon) =>{
