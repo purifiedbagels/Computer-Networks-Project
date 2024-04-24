@@ -23,9 +23,7 @@ const subPlay = document.getElementById("subPlay");
 subUsername.addEventListener("click", getUsername);
 subRoom.addEventListener("click", roomSelect);
 subPlay.addEventListener("click", takeTurn);
-//document.getElementById('boardState').innerHTML = printboardState(boardState);
 
-//Display all users
 socketRef.on("new user", userList => {
     if(JSON.stringify(user) === JSON.stringify([]))
     {
@@ -40,19 +38,27 @@ socketRef.on("initial update rooms", roomList => {
     console.log(rooms);
     printRoomState();
 });
-socketRef.on("update rooms", roomList => {
+socket.on("update rooms", roomList => {
     rooms = [];
     rooms.push(roomList);
     console.log(rooms);
-    printRoomState();
     document.getElementById('boardState').innerHTML = printboardState(rooms[0][currentBoard].board);
+    printRoomState();
 });
-socketRef.on("room joined", (roomNum) =>{
+socketRef.on("update room state", roomList => {
+    for(let i = 0; i < 4; i++)
+    {
+        rooms[0][i].numUsers = roomList[i].numUsers;
+    }
+    printRoomState();
+});
+socket.on("room joined", (roomNum) =>{
+    console.log("room joined client");
     document.getElementById('boardState').innerHTML = printboardState(rooms[0][roomNum].board);
     document.getElementById("boardState").style.display = "block";
     currentBoard = roomNum;
 });
-socketRef.on("player won", (playerWon) =>{
+socket.on("player won", (playerWon) =>{
     if(JSON.stringify(playerWon).includes(JSON.stringify(user)))
     {
         document.getElementById("playerWon").innerHTML = "You won!";
@@ -82,9 +88,11 @@ function getUsername()
 function roomSelect()
 {
     let roomNum = document.getElementById('room').value;
+    let roomID = "room"+document.getElementById('room').value;
     let user_exists = false;
     console.log("Room Selected: " + JSON.stringify(roomNum));
     console.log("Static user is: " + JSON.stringify(user));
+    console.log("rooms is: " + rooms);
     console.log("Value of rooms[0][roomNum].users: " + JSON.stringify(rooms[0][roomNum].users));
     console.log("Value of JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)): " + JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)));
     if(JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)))
@@ -108,6 +116,7 @@ function roomSelect()
             rooms[0][roomNum].users.push(user);
             console.log("users in client side room now is: " + JSON.stringify(rooms[0][roomNum].users));
         }
+        console.log("Sending join room to server with: " + JSON.stringify(rooms[0][roomNum]));
         socket.emit("join room", rooms[0][roomNum]);
         rooms[0][roomNum].users.pop(null);
         document.getElementById("playSquare").style.display = "block";
@@ -116,6 +125,7 @@ function roomSelect()
 
 function takeTurn()
 {
+    let roomID = "room"+currentBoard;
     let selectedSquare = [parseInt(document.getElementById('playRow').value), parseInt(document.getElementById('playCol').value), currentBoard, user];
     console.log("The user selected square: " + JSON.stringify(selectedSquare));
     socket.emit("play square", selectedSquare);
