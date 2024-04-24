@@ -116,7 +116,7 @@ function checkWin(board)
         //Check Horizontally
         if(board[i][0] == '' || board[i][1] == '' || board[i][2] == '')
         {
-            break;
+            continue;
         }
         if(board[i][0] == board[i][1] && board[i][0] == board[i][2])
         {
@@ -128,7 +128,7 @@ function checkWin(board)
         //Check Vertically
         if(board[0][i] == '' || board[1][i] == '' || board[2][i] == '')
         {
-            break;
+            continue;
         }
         if(board[0][i] == board[1][i] && board[0][i] == board[2][i])
         {
