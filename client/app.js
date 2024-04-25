@@ -23,9 +23,7 @@ const subPlay = document.getElementById("subPlay");
 subUsername.addEventListener("click", getUsername);
 subRoom.addEventListener("click", roomSelect);
 subPlay.addEventListener("click", takeTurn);
-//document.getElementById('boardState').innerHTML = printboardState(boardState);
 
-//Display all users
 socketRef.on("new user", userList => {
     if(JSON.stringify(user) === JSON.stringify([]))
     {
@@ -45,10 +43,12 @@ socketRef.on("update rooms", roomList => {
     rooms.push(roomList);
     console.log(rooms);
     printRoomState();
-    document.getElementById('boardState').innerHTML = printboardState(rooms[0][currentBoard].board);
+    //document.getElementById('boardState').innerHTML = printboardState(rooms[0][currentBoard].board);
+    printboardState(rooms[0][currentBoard].board);
 });
 socketRef.on("room joined", (roomNum) =>{
-    document.getElementById('boardState').innerHTML = printboardState(rooms[0][roomNum].board);
+    //document.getElementById('boardState').innerHTML = printboardState(rooms[0][roomNum].board);
+    printboardState(rooms[0][roomNum].board);
     document.getElementById("boardState").style.display = "block";
     currentBoard = roomNum;
 });
@@ -123,16 +123,19 @@ function takeTurn()
 
 function printboardState(a)
 {
-    let printBoard = ""
+    let sqID = "";
+    let sqCnt = 0;
     for(let i = 0; i < 3; i++)
     {
         for(let n = 0; n < 3; n++)
         {
-            printBoard = printBoard + "|" + a[i][n] + "|";
+            sqID = "";
+            sqID = "sq" + sqCnt;
+            console.log(sqID);
+            document.getElementById(sqID).innerHTML = a[i][n];
+            sqCnt++;
         }
-        printBoard = printBoard + "<br>";
     }
-    return printBoard;
 }
 
 function printRoomState()
