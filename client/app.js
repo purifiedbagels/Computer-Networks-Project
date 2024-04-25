@@ -9,7 +9,7 @@ let winBool = false;
 let tieBool = false;
 let socketRef = io.connect("/");
 let currentBoard = -1;
-
+let tds = document.querySelectorAll("td");
 
 document.getElementById("pickRoomHeader").style.display = "none";
 document.getElementById("roomState").style.display = "none";
@@ -19,10 +19,10 @@ document.getElementById("playerWon").style.display = "none";
 document.getElementById("boardState").style.display = "none";
 const subUsername = document.getElementById("subUsername");
 const subRoom = document.getElementById("subRoom");
-const subPlay = document.getElementById("subPlay");
 subUsername.addEventListener("click", getUsername);
 subRoom.addEventListener("click", roomSelect);
-subPlay.addEventListener("click", takeTurn);
+tds.forEach((td)=>{td.addEventListener("click", takeTurn);})
+
 
 socketRef.on("new user", userList => {
     if(JSON.stringify(user) === JSON.stringify([]))
@@ -43,11 +43,9 @@ socketRef.on("update rooms", roomList => {
     rooms.push(roomList);
     console.log(rooms);
     printRoomState();
-    //document.getElementById('boardState').innerHTML = printboardState(rooms[0][currentBoard].board);
     printboardState(rooms[0][currentBoard].board);
 });
 socketRef.on("room joined", (roomNum) =>{
-    //document.getElementById('boardState').innerHTML = printboardState(rooms[0][roomNum].board);
     printboardState(rooms[0][roomNum].board);
     document.getElementById("boardState").style.display = "block";
     currentBoard = roomNum;
@@ -114,13 +112,6 @@ function roomSelect()
     }
 }
 
-function takeTurn()
-{
-    let selectedSquare = [parseInt(document.getElementById('playRow').value), parseInt(document.getElementById('playCol').value), currentBoard, user];
-    console.log("The user selected square: " + JSON.stringify(selectedSquare));
-    socket.emit("play square", selectedSquare);
-}
-
 function printboardState(a)
 {
     let sqID = "";
@@ -152,4 +143,54 @@ function printRoomState()
         roomState = roomState + ' | ' + tempParse;
     }
 document.getElementById('roomState').innerHTML = roomState;
+}
+
+function takeTurn()
+{
+    let tempID = this.id;
+    let tempRow = 0;
+    let tempCol = 0;
+    switch (tempID)
+    {
+        case 'sq0' :
+            tempRow = 0;
+            tempCol = 0;
+            break;
+        case 'sq1' :
+            tempRow = 0;
+            tempCol = 1;
+            break;
+        case 'sq2' :
+            tempRow = 0;
+            tempCol = 2;
+            break;
+        case 'sq3' :
+            tempRow = 1;
+            tempCol = 0;
+            break;
+        case 'sq4' :
+            tempRow = 1;
+            tempCol = 1;
+            break; 
+        case 'sq5' :
+            tempRow = 1;
+            tempCol = 2;
+            break;
+        case 'sq6' :
+            tempRow = 2;
+            tempCol = 0;
+            break;
+        case 'sq7' :
+            tempRow = 2;
+            tempCol = 1;
+            break;
+        case 'sq8' :
+            tempRow = 2;
+            tempCol = 2;
+            break;
+    }
+    let selectedSquare = [parseInt(tempRow), parseInt(tempCol), currentBoard, user];
+    console.log("The user selected square: " + JSON.stringify(selectedSquare));
+    socket.emit("play square", selectedSquare);
+    console.log(tempID);
 }
