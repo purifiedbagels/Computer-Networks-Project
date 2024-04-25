@@ -20,7 +20,8 @@ let rooms = [
         won: false,
         board: [['','',''],
                 ['','',''],
-                ['','','']] 
+                ['','','']],
+        lastPlayed: [[]] 
     },
     {
         id: 1,
@@ -29,7 +30,8 @@ let rooms = [
         won: false, 
         board: [['','',''],
                 ['','',''],
-                ['','','']] 
+                ['','','']],
+        lastPlayed: [[]] 
     },
     {
         id: 2,
@@ -38,7 +40,8 @@ let rooms = [
         won: false, 
         board: [['','',''],
                 ['','',''],
-                ['','','']]  
+                ['','','']],
+        lastPlayed: [[]]  
     },
     {
         id: 3,
@@ -47,10 +50,10 @@ let rooms = [
         won: false, 
         board: [['','',''],
                 ['','',''],
-                ['','','']]  
+                ['','','']],
+        lastPlayed: [[]]  
     }
 ];
-let lastPlayed = [[]];
 
 
 //connection event 
@@ -91,7 +94,7 @@ io.on('connection', socket => {
         if(rooms[square[2]].won){}
         else
         {
-            if(JSON.stringify(lastPlayed).includes(JSON.stringify(square[3])) == false && rooms[square[2]].board[square[0]][square[1]] == '')
+            if(JSON.stringify(rooms[square[2]].lastPlayed).includes(JSON.stringify(square[3])) == false && rooms[square[2]].board[square[0]][square[1]] == '')
             {
                 if(JSON.stringify(rooms[square[2]].users[0]) === JSON.stringify(square[3]))
                 {
@@ -101,14 +104,14 @@ io.on('connection', socket => {
                 {
                     rooms[square[2]].board[square[0]][square[1]] = "o";
                 }
-            lastPlayed = [square[3]];
+            rooms[square[2]].lastPlayed = [square[3]];
             io.to(roomID).emit("update rooms", rooms);
             let win = checkWin(rooms[square[2]].board);
             console.log("Win is: " + win);
             if(win)
             {
                 rooms[square[2]].won = true;
-                io.to(roomID).emit("player won", lastPlayed);
+                io.to(roomID).emit("player won", rooms[square[2]].lastPlayed);
             }
             }
         }
