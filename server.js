@@ -20,7 +20,8 @@ let rooms = [
         won: false,
         board: [['','',''],
                 ['','',''],
-                ['','','']] 
+                ['','','']],
+        lastPlayed: [[]] 
     },
     {
         id: 1,
@@ -29,7 +30,8 @@ let rooms = [
         won: false, 
         board: [['','',''],
                 ['','',''],
-                ['','','']] 
+                ['','','']],
+        lastPlayed: [[]] 
     },
     {
         id: 2,
@@ -38,7 +40,8 @@ let rooms = [
         won: false, 
         board: [['','',''],
                 ['','',''],
-                ['','','']] 
+                ['','','']],
+        lastPlayed: [[]]  
     },
     {
         id: 3,
@@ -47,10 +50,10 @@ let rooms = [
         won: false, 
         board: [['','',''],
                 ['','',''],
-                ['','','']] 
+                ['','','']],
+        lastPlayed: [[]]  
     }
 ];
-let lastPlayed = [[]];
 
 
 //connection event 
@@ -68,23 +71,30 @@ io.on('connection', socket => {
         io.emit("initial update rooms", rooms);
     });
     socket.on("join room", (roomList) => {
-        //socket.join(roomList.id);
+        let roomID = "room"+roomList.id;
+        socket.join(roomID);
+        console.log(socket.rooms);
         console.log(roomList.numUsers);
         rooms[roomList.id].numUsers = roomList.numUsers;
         rooms[roomList.id].board = roomList.board;
         console.log("Room users before updating: " + JSON.stringify(rooms[roomList.id].users));
         if(roomList.users.includes(null) == false)
+            console.log("Detected null in client side room users");
+            console.log("pushing last element of client side room user to serverside room users: " + JSON.stringify(roomList.users[roomList.users.length - 1]));
             rooms[roomList.id].users.push(roomList.users[roomList.users.length - 1]);
         console.log("Room users after updating: " + JSON.stringify(rooms[roomList.id].users));
         console.log("The users on the server side are: " + JSON.stringify(users));
-        io.emit("room joined", roomList.id);
-        io.emit("update rooms", rooms)
+        io.to(roomID).emit("room joined", roomList.id);
+        io.to(roomID).emit("update rooms", rooms);
+        io.emit("update room state", rooms);
     });
     socket.on("play square", (square) => {
+        let roomID = "room"+square[2];
+        console.log(roomID);
         if(rooms[square[2]].won){}
         else
         {
-            if(JSON.stringify(lastPlayed).includes(JSON.stringify(square[3])) == false && rooms[square[2]].board[square[0]][square[1]] == '')
+            if(JSON.stringify(rooms[square[2]].lastPlayed).includes(JSON.stringify(square[3])) == false && rooms[square[2]].board[square[0]][square[1]] == '')
             {
                 if(JSON.stringify(rooms[square[2]].users[0]) === JSON.stringify(square[3]))
                 {
@@ -94,14 +104,14 @@ io.on('connection', socket => {
                 {
                     rooms[square[2]].board[square[0]][square[1]] = "o";
                 }
-            lastPlayed = [square[3]];
-            io.emit("update rooms", rooms);
+            rooms[square[2]].lastPlayed = [square[3]];
+            io.to(roomID).emit("update rooms", rooms);
             let win = checkWin(rooms[square[2]].board);
             console.log("Win is: " + win);
             if(win)
             {
                 rooms[square[2]].won = true;
-                io.emit("player won", lastPlayed);
+                io.to(roomID).emit("player won", rooms[square[2]].lastPlayed);
             }
             }
         }
