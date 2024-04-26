@@ -15,12 +15,19 @@ document.getElementById("pickRoomHeader").style.display = "none";
 document.getElementById("roomState").style.display = "none";
 document.getElementById("roomSelector").style.display = "none";
 document.getElementById("playSquare").style.display = "none";
+document.getElementById("yourTurn").style.display = "none";
 document.getElementById("playerWon").style.display = "none";
+document.getElementById("subNewGame").style.display = "none";
+document.getElementById("leaveRoom").style.display = "none";
 document.getElementById("boardState").style.display = "none";
 const subUsername = document.getElementById("subUsername");
 const subRoom = document.getElementById("subRoom");
+const subNewGame = document.getElementById("subNewGame");
+const subleaveRoom = document.getElementById("leaveRoom")
 subUsername.addEventListener("click", getUsername);
 subRoom.addEventListener("click", roomSelect);
+subNewGame.addEventListener("click", newGame);
+subleaveRoom.addEventListener("click", leaveRoom);
 tds.forEach((td)=>{td.addEventListener("click", takeTurn);})
 
 
@@ -28,26 +35,49 @@ socketRef.on("new user", userList => {
     if(JSON.stringify(user) === JSON.stringify([]))
     {
         user.push(userList);
-        console.log(user);
+        console.log("User: " + user);
         socket.emit("initial room update", rooms);
     }
 });
 socketRef.on("initial update rooms", roomList => {
     rooms = [];
     rooms.push(roomList);
-    console.log(rooms);
     printRoomState();
 });
 socket.on("update rooms", roomList => {
     rooms = [];
     rooms.push(roomList);
-    console.log(rooms);
+    console.log("Updating rooms: " + JSON.stringify(rooms));
     printRoomState();
     printboardState(rooms[0][currentBoard].board);
+    if(JSON.stringify(rooms[0][currentBoard].lastPlayed) == JSON.stringify([[]]))
+    {
+        document.getElementById("yourTurn").innerHTML = "Waiting for another player to join!"
+    }
+    else if(JSON.stringify(rooms[0][currentBoard].lastPlayed).includes(JSON.stringify(user)))
+    {
+        document.getElementById("yourTurn").innerHTML = "Waiting on opponent's turn!"
+    }
+    else
+    {
+        document.getElementById("yourTurn").innerHTML = "Your turn to play!"
+    }
+    if(rooms[0][currentBoard].won == false)
+    {
+        document.getElementById("playerWon").style.display = "none";
+        document.getElementById("yourTurn").style.display = "block";
+    }
+    else
+    {
+        document.getElementById("playerWon").style.display = "block";
+        document.getElementById("yourTurn").style.display = "none";
+    }
 });
 socket.on("room joined", (roomNum) =>{
     printboardState(rooms[0][roomNum].board);
     document.getElementById("boardState").style.display = "block";
+    document.getElementById("subNewGame").style.display = "block";
+    document.getElementById("leaveRoom").style.display = "block";
     currentBoard = roomNum;
     printRoomState();
 });
@@ -68,13 +98,11 @@ socket.on("player won", (playerWon) =>{
     {
         document.getElementById("playerWon").innerHTML = "You lose!";
     }
-    document.getElementById("playerWon").style.display = "block";
 });
 
 function getUsername()
 {
     let username = document.getElementById('username').value;
-    console.log("get user triggered");
     socket.emit("join server", username);
     document.getElementById("username").style.display = "none";
     document.getElementById("usernameLabel").style.display = "none";
@@ -90,37 +118,48 @@ function roomSelect()
     let roomNum = document.getElementById('room').value;
     let roomID = "room"+document.getElementById('room').value;
     let user_exists = false;
-    console.log("Room Selected: " + JSON.stringify(roomNum));
-    console.log("Static user is: " + JSON.stringify(user));
-    console.log("rooms is: " + rooms);
-    console.log("Value of rooms[0][roomNum].users: " + JSON.stringify(rooms[0][roomNum].users));
-    console.log("Value of JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)): " + JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)));
+    console.log("Static user: " + JSON.stringify(user));
+    console.log("Room users: " + JSON.stringify(rooms[0][roomNum].users));
     if(JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)))
     {
         user_exists = true;
         rooms[0][roomNum].users.push(null);
-        console.log("This user is already in the room");
     }
-    console.log("Output for saying room is full: " + rooms[0][roomNum].numUsers == 2 && user_exists == false)
     if(rooms[0][roomNum].numUsers == 2 && user_exists == false)
     {
         document.getElementById('roomFull').innerHTML = "Room is full, select another";
         document.getElementById('roomFull').style.display = "block";
     }
-    else if(rooms[0][roomNum].numUsers != 2)
+    else
     {
         document.getElementById('roomFull').style.display = "none";
         if(user_exists == false)
         {
             rooms[0][roomNum].numUsers = rooms[0][roomNum].numUsers + 1;
             rooms[0][roomNum].users.push(user);
-            console.log("users in client side room now is: " + JSON.stringify(rooms[0][roomNum].users));
         }
-        console.log("Sending join room to server with: " + JSON.stringify(rooms[0][roomNum]));
+        console.log("Joining Room: " + JSON.stringify(rooms[0][roomNum]));
         socket.emit("join room", rooms[0][roomNum]);
         rooms[0][roomNum].users.pop(null);
         document.getElementById("playSquare").style.display = "block";
     }
+}
+
+function newGame()
+{
+    socket.emit("new game", currentBoard);
+}
+
+function leaveRoom()
+{
+    socket.emit("leave room", [currentBoard, user]);
+    currentBoard = -1;
+    document.getElementById("playSquare").style.display = "none";
+    document.getElementById("playerWon").style.display = "none";
+    document.getElementById("yourTurn").style.display = "none";
+    document.getElementById("boardState").style.display = "none";
+    document.getElementById("subNewGame").style.display = "none";
+    document.getElementById("leaveRoom").style.display = "none";
 }
 
 function printboardState(a)
@@ -133,7 +172,6 @@ function printboardState(a)
         {
             sqID = "";
             sqID = "sq" + sqCnt;
-            console.log(sqID);
             document.getElementById(sqID).innerHTML = a[i][n];
             sqCnt++;
         }
@@ -201,7 +239,11 @@ function takeTurn()
             break;
     }
     let selectedSquare = [parseInt(tempRow), parseInt(tempCol), currentBoard, user];
-    console.log("The user selected square: " + JSON.stringify(selectedSquare));
-    socket.emit("play square", selectedSquare);
-    console.log(tempID);
+    if(JSON.stringify(rooms[0][currentBoard].lastPlayed) == JSON.stringify([[]])){}
+    else
+    {
+        console.log("The user selected square: " + JSON.stringify(selectedSquare));
+        socket.emit("play square", selectedSquare);
+    }
+    
 }
