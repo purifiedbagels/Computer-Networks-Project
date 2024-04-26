@@ -26,16 +26,40 @@
       <label id="roomFull"></label>
   </div>
 
-  <div id = 'boardState'>
-  </div>
+  <table id = 'boardState'>
+    <tr>
+      <td id="sq0"></td>
+      <td id="sq1"></td>
+      <td id="sq2"></td>
+  </tr>
+  <tr>
+      <td id="sq3"></td>
+      <td id="sq4"></td>
+      <td id="sq5"></td>
+  </tr>
+  <tr>
+      <td id="sq6"></td>
+      <td id="sq7"></td>
+      <td id="sq8"></td>
+  </tr>
+</table>
   <div id="playSquare">
-    <input type = "number" id = "playRow" min = "0" max = "2" />
-      <lable for="playRow">Row #</lable>
-    <input type = "number" id = "playCol"min = "0" max = "2" />
-      <lable for="playCol">Col #</lable>
-    <button id = 'subPlay'>Submit</button>
   </div>
   
   <div id="playerWon"></div>
 </body>
 </html>
+
+<style>
+
+  td {
+text-align: center;
+border: 1px solid black;
+height: 50px;
+width: 50px;
+padding: 0px;
+font-size: 400%
+}
+
+td:hover{background:#D3D3D3;color:#fff}
+</style>
