@@ -10,7 +10,6 @@ const io = require("socket.io")(server, {
     }
 });
 
-
 let users = [];
 let rooms = [
     {
@@ -64,7 +63,7 @@ io.on('connection', socket => {
             id: socket.id,
         };
         users.push(user);
-        console.log(user);
+        console.log("The users on the server side are: " + JSON.stringify(users));
         io.emit("new user", user);
     });
     socket.on("initial room update", (room) => {
@@ -74,23 +73,24 @@ io.on('connection', socket => {
         let roomID = "room"+roomList.id;
         socket.join(roomID);
         console.log(socket.rooms);
-        console.log(roomList.numUsers);
         rooms[roomList.id].numUsers = roomList.numUsers;
         rooms[roomList.id].board = roomList.board;
         console.log("Room users before updating: " + JSON.stringify(rooms[roomList.id].users));
         if(roomList.users.includes(null) == false)
-            console.log("Detected null in client side room users");
-            console.log("pushing last element of client side room user to serverside room users: " + JSON.stringify(roomList.users[roomList.users.length - 1]));
+        {
             rooms[roomList.id].users.push(roomList.users[roomList.users.length - 1]);
+        }
         console.log("Room users after updating: " + JSON.stringify(rooms[roomList.id].users));
-        console.log("The users on the server side are: " + JSON.stringify(users));
+        if(rooms[roomList.id].users.length == 2 && JSON.stringify(rooms[roomList.id].lastPlayed) == JSON.stringify([[]]))
+        {
+            rooms[roomList.id].lastPlayed = rooms[roomList.id].users[1]
+        }
         io.to(roomID).emit("room joined", roomList.id);
         io.to(roomID).emit("update rooms", rooms);
         io.emit("update room state", rooms);
     });
     socket.on("play square", (square) => {
         let roomID = "room"+square[2];
-        console.log(roomID);
         if(rooms[square[2]].won){}
         else
         {
@@ -105,16 +105,31 @@ io.on('connection', socket => {
                     rooms[square[2]].board[square[0]][square[1]] = "o";
                 }
             rooms[square[2]].lastPlayed = [square[3]];
-            io.to(roomID).emit("update rooms", rooms);
             let win = checkWin(rooms[square[2]].board);
-            console.log("Win is: " + win);
             if(win)
             {
                 rooms[square[2]].won = true;
                 io.to(roomID).emit("player won", rooms[square[2]].lastPlayed);
             }
+            io.to(roomID).emit("update rooms", rooms);
             }
         }
+    });
+    socket.on("new game", (roomID) => {
+        newGame(roomID);
+        io.to("room" + roomID).emit("update rooms", rooms);
+    });
+    socket.on("leave room", (userLeave) => {
+        newGame(userLeave[0]);
+        rooms[userLeave[0]].lastPlayed = [[]];
+        rooms[userLeave[0]].users.splice(rooms[userLeave[0]].users.indexOf(userLeave[1]));
+        if(rooms[userLeave[0]].numUsers > 0)
+        {
+            rooms[userLeave[0]].numUsers = rooms[userLeave[0]].numUsers - 1
+        }
+        socket.leave("room" + userLeave[0]);
+        io.emit("initial update rooms", rooms);
+        io.to("room" + userLeave[0]).emit("update rooms", rooms);
     });
 });
 
@@ -164,6 +179,12 @@ function checkWin(board)
     }
     return win;
     
+}
+
+function newGame(roomID)
+{
+    rooms[roomID].won = false;
+    rooms[roomID].board = [['','',''],['','',''],['','','']];
 }
 
 //Middleware for serving static files. Points express server to the correct folder for pulling files
