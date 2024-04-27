@@ -1,4 +1,4 @@
-
+// Instantiate variables and join server
 let boardState = [['','',''],
                 ['','',''],
                 ['','','']];
@@ -11,6 +11,7 @@ let socketRef = io.connect("/");
 let currentBoard = -1;
 let tds = document.querySelectorAll("td");
 
+// Hide elements that appear based on client state
 document.getElementById("pickRoomHeader").style.display = "none";
 document.getElementById("roomState").style.display = "none";
 document.getElementById("roomSelector").style.display = "none";
@@ -20,6 +21,7 @@ document.getElementById("playerWon").style.display = "none";
 document.getElementById("subNewGame").style.display = "none";
 document.getElementById("leaveRoom").style.display = "none";
 document.getElementById("boardState").style.display = "none";
+// Setup all submission buttons
 const subUsername = document.getElementById("subUsername");
 const subRoom = document.getElementById("subRoom");
 const subNewGame = document.getElementById("subNewGame");
@@ -30,7 +32,7 @@ subNewGame.addEventListener("click", newGame);
 subleaveRoom.addEventListener("click", leaveRoom);
 tds.forEach((td)=>{td.addEventListener("click", takeTurn);})
 
-
+// Caches the client's user object and calls to do initial update rooms
 socketRef.on("new user", userList => {
     if(JSON.stringify(user) === JSON.stringify([]))
     {
@@ -39,11 +41,13 @@ socketRef.on("new user", userList => {
         socket.emit("initial room update", rooms);
     }
 });
+// Updates rooms and only prints room states
 socketRef.on("initial update rooms", roomList => {
     rooms = [];
     rooms.push(roomList);
     printRoomState();
 });
+// Updates rooms and displays proper elements
 socket.on("update rooms", roomList => {
     rooms = [];
     rooms.push(roomList);
@@ -73,6 +77,7 @@ socket.on("update rooms", roomList => {
         document.getElementById("yourTurn").style.display = "none";
     }
 });
+// Handles switching rooms and updates elements
 socket.on("room joined", (roomNum) =>{
     printboardState(rooms[0][roomNum].board);
     document.getElementById("boardState").style.display = "block";
@@ -81,6 +86,7 @@ socket.on("room joined", (roomNum) =>{
     currentBoard = roomNum;
     printRoomState();
 });
+// Unique update for clients that are not in the room that was joined
 socketRef.on("update room state", roomList => {
     for(let i = 0; i < 4; i++)
     {
@@ -88,6 +94,7 @@ socketRef.on("update room state", roomList => {
     }
     printRoomState();
 });
+// Event for displaying win state
 socket.on("player won", (playerWon) =>{
     if(JSON.stringify(playerWon).includes(JSON.stringify(user)))
     {
@@ -100,6 +107,7 @@ socket.on("player won", (playerWon) =>{
     }
 });
 
+// Function for submission of a username and joining server
 function getUsername()
 {
     let username = document.getElementById('username').value;
@@ -113,6 +121,7 @@ function getUsername()
     document.getElementById('username').value = null;
 }
 
+// Function for submission of a room selection
 function roomSelect()
 {
     let roomNum = document.getElementById('room').value;
@@ -120,19 +129,23 @@ function roomSelect()
     let user_exists = false;
     console.log("Static user: " + JSON.stringify(user));
     console.log("Room users: " + JSON.stringify(rooms[0][roomNum].users));
+    // Checks if the user is already in the room
     if(JSON.stringify(rooms[0][roomNum].users).includes(JSON.stringify(user)))
     {
         user_exists = true;
         rooms[0][roomNum].users.push(null);
     }
+    // Checks if room is full
     if(rooms[0][roomNum].numUsers == 2 && user_exists == false)
     {
         document.getElementById('roomFull').innerHTML = "Room is full, select another";
         document.getElementById('roomFull').style.display = "block";
     }
+    // Joins the room if room is not full
     else
     {
         document.getElementById('roomFull').style.display = "none";
+        // Push user is the user is not in the room yet
         if(user_exists == false)
         {
             rooms[0][roomNum].numUsers = rooms[0][roomNum].numUsers + 1;
@@ -145,11 +158,13 @@ function roomSelect()
     }
 }
 
+// Function for submission of a new game
 function newGame()
 {
     socket.emit("new game", currentBoard);
 }
 
+// Function for submission of leaving a room
 function leaveRoom()
 {
     socket.emit("leave room", [currentBoard, user]);
@@ -162,6 +177,7 @@ function leaveRoom()
     document.getElementById("leaveRoom").style.display = "none";
 }
 
+// Function to print the board state 
 function printboardState(a)
 {
     let sqID = "";
@@ -178,6 +194,7 @@ function printboardState(a)
     }
 }
 
+// Function to print the room states
 function printRoomState()
 {
     let roomState = "";
@@ -194,11 +211,13 @@ function printRoomState()
 document.getElementById('roomState').innerHTML = roomState;
 }
 
+// Function for a client taking a turn
 function takeTurn()
 {
     let tempID = this.id;
     let tempRow = 0;
     let tempCol = 0;
+    // switch statement to convert table square to rows and columns
     switch (tempID)
     {
         case 'sq0' :
