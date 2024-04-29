@@ -1,3 +1,4 @@
+// Instantiate variables and create the server
 const express = require('express');
 const http = require("http");
 const path = require('path');
@@ -57,6 +58,7 @@ let rooms = [
 
 //connection event 
 io.on('connection', socket => {
+    // Creates a user when a client joins server
     socket.on("join server", (username) => {
         const user = {
             username,
@@ -66,9 +68,11 @@ io.on('connection', socket => {
         console.log("The users on the server side are: " + JSON.stringify(users));
         io.to(socket.id).emit("new user", user);
     });
+    // Updates the client rooms when user is initially created
     socket.on("initial room update", (room) => {
         io.emit("initial update rooms", rooms);
     });
+    // Adds the client socket to the room specified and updates room
     socket.on("join room", (roomList) => {
         let roomID = "room"+roomList.id;
         socket.join(roomID);
@@ -76,11 +80,13 @@ io.on('connection', socket => {
         rooms[roomList.id].numUsers = roomList.numUsers;
         rooms[roomList.id].board = roomList.board;
         console.log("Room users before updating: " + JSON.stringify(rooms[roomList.id].users));
+        // Checks if the user is already in the room(indicated by null) and pushes user if not
         if(roomList.users.includes(null) == false)
         {
             rooms[roomList.id].users.push(roomList.users[roomList.users.length - 1]);
         }
         console.log("Room users after updating: " + JSON.stringify(rooms[roomList.id].users));
+        // Keeps lastPlayed null until 2 users join room, allowing for play
         if(rooms[roomList.id].users.length == 2 && JSON.stringify(rooms[roomList.id].lastPlayed) == JSON.stringify([[]]))
         {
             rooms[roomList.id].lastPlayed = rooms[roomList.id].users[1]
@@ -89,11 +95,14 @@ io.on('connection', socket => {
         io.to(roomID).emit("update rooms", rooms);
         io.emit("update room state", rooms);
     });
+    // Updates the game state when a client plays a square
     socket.on("play square", (square) => {
         let roomID = "room"+square[2];
+        // Does not allow play if the game is already won
         if(rooms[square[2]].won){}
         else
         {
+            // Only allow next player to play and determine x/o
             if(JSON.stringify(rooms[square[2]].lastPlayed).includes(JSON.stringify(square[3])) == false && rooms[square[2]].board[square[0]][square[1]] == '')
             {
                 if(JSON.stringify(rooms[square[2]].users[0]) === JSON.stringify(square[3]))
@@ -105,6 +114,7 @@ io.on('connection', socket => {
                     rooms[square[2]].board[square[0]][square[1]] = "o";
                 }
             rooms[square[2]].lastPlayed = [square[3]];
+            // Check the win state and update values if player won
             let win = checkWin(rooms[square[2]].board);
             if(win)
             {
@@ -115,11 +125,14 @@ io.on('connection', socket => {
             }
         }
     });
+    // Allows for players to create a clean, new game
     socket.on("new game", (roomID) => {
         newGame(roomID);
         io.to("room" + roomID).emit("update rooms", rooms);
     });
+    // Allows for players to disconnect their socket from a room
     socket.on("leave room", (userLeave) => {
+        // Removes user and clears game state
         newGame(userLeave[0]);
         rooms[userLeave[0]].lastPlayed = [[]];
         rooms[userLeave[0]].users.splice(rooms[userLeave[0]].users.indexOf(userLeave[1]));
@@ -133,6 +146,7 @@ io.on('connection', socket => {
     });
 });
 
+// Function that checks win conditions of the board
 function checkWin(board)
 {
     let win = false;
@@ -181,6 +195,7 @@ function checkWin(board)
     
 }
 
+// Function to clear the board and won value of a room
 function newGame(roomID)
 {
     rooms[roomID].won = false;
