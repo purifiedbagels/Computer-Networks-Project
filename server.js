@@ -64,7 +64,7 @@ io.on('connection', socket => {
         };
         users.push(user);
         console.log("The users on the server side are: " + JSON.stringify(users));
-        io.emit("new user", user);
+        io.to(socket.id).emit("new user", user);
     });
     socket.on("initial room update", (room) => {
         io.emit("initial update rooms", rooms);

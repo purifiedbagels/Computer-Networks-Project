@@ -31,7 +31,7 @@ subleaveRoom.addEventListener("click", leaveRoom);
 tds.forEach((td)=>{td.addEventListener("click", takeTurn);})
 
 
-socketRef.on("new user", userList => {
+socket.on("new user", userList => {
     if(JSON.stringify(user) === JSON.stringify([]))
     {
         user.push(userList);
